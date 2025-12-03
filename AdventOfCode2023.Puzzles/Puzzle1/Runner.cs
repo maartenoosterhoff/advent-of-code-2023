@@ -7,7 +7,7 @@ public class Runner
 {
     [Test]
     [Arguments("TestInput", 142)]
-    [Arguments("Input", 55477)]
+    [Arguments("Input", 54438)]
     public void RunAlpha(string filename, int expected)
     {
         var actual = Execute(filename, text => Finder(text, false));
@@ -38,7 +38,10 @@ public class Runner
     private static string GetReplacedText(string text)
     {
         var pos = 0;
-        while (pos < text.Length)
+        var replaced = false;
+        var indexOfFirstDigit = text.Select((x, i) => new { index = i, text = x, isNumber = Char.IsNumber(x) }).Where(x => x.isNumber).Select(x => x.index).DefaultIfEmpty(-1).First();
+
+        while (pos < text.Length && pos < indexOfFirstDigit && !replaced)
         {
             foreach (var kvp in _mapper)
             {
@@ -47,11 +50,31 @@ public class Runner
                     text =
                         text.Substring(0, pos + kvp.Key.Length).Replace(kvp.Key, kvp.Value) +
                         text.Substring(pos + kvp.Key.Length);
+                    replaced = true;
                     break;
                 }
             }
 
             pos++;
+        }
+
+        replaced = false;
+        pos = text.Length - 1;
+        while (pos >= 0 && !replaced)
+        {
+            foreach (var kvp in _mapper)
+            {
+                if (text.IndexOf(kvp.Key) == pos)
+                {
+                    text =
+                        text.Substring(0, pos + kvp.Key.Length).Replace(kvp.Key, kvp.Value) +
+                        text.Substring(pos + kvp.Key.Length);
+                    replaced = true;
+                    break;
+                }
+            }
+
+            pos--;
         }
 
         return text;
